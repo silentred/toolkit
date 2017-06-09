@@ -1,0 +1,28 @@
+[app]
+runMode = "dev"
+name = "webapp"
+port = 8080
+
+logProvider = "file"
+logPath = "/tmp"
+logRotate = true
+logRotateType = "day"
+logLimit = "100MB"
+
+[session]
+enable = false
+provider = "file"
+
+[[mysql]]
+name="master"
+host="localhost"
+port=3306
+user="root"
+db="test"
+password=""
+read_only=false
+
+[redis]
+host="localhost"
+port= 6379
+db = 0
