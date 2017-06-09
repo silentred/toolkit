@@ -26,6 +26,16 @@ import (
 	"github.com/spf13/viper"
 )
 
+type HookType byte
+
+const (
+	ConfigHook HookType = iota
+	LoggerHook
+	ServiceHook
+	RouterHook
+	ShutdownHook
+)
+
 var (
 	// AppMode is App's running envirenment. Valid values are dev and prod
 	AppMode    string
@@ -40,9 +50,30 @@ func init() {
 }
 
 type Application interface {
+	// Container
+	Get()
+	Set()
+	Inject()
+	// load from file
+	LoadConfig(mode string) cfg.AppConfig
+	SetConfig()
+	GetConfig()
+
+	DefaultLogger() util.Logger
+	Logger(name string) util.Logger
+	// goes before InitService
+	InitLogger()
+	// initalize db and other common service
+	InitService()
+
+	RegisterHook(HookType, HookFunc)
 }
 
 type WebApp interface {
+	Application
+	GetRouter()
+	SetRouter()
+	ListenAndServe()
 }
 
 // HookFunc when app starting and tearing down
@@ -54,9 +85,8 @@ type App struct {
 	Injector container.Injector
 	Router   *echo.Echo
 
-	// TODO use interface for logger
-	loggers map[string]*echorus.Echorus
-	Config  cfg.AppConfig
+	loggers map[string]util.Logger
+	Config  *cfg.AppConfig
 
 	configHooks   []HookFunc
 	loggerHooks   []HookFunc
@@ -71,7 +101,7 @@ func NewApp() *App {
 		Store:    &container.Map{},
 		Injector: container.NewInjector(),
 		Router:   echo.New(),
-		loggers:  make(map[string]*echorus.Echorus),
+		loggers:  make(map[string]util.Logger),
 	}
 	// register App itself
 	app.Set("app", app, nil)
@@ -79,7 +109,7 @@ func NewApp() *App {
 }
 
 // Logger of name
-func (app *App) Logger(name string) *echorus.Echorus {
+func (app *App) Logger(name string) util.Logger {
 	if name == "" {
 		return app.loggers["default"]
 	}
@@ -90,7 +120,7 @@ func (app *App) Logger(name string) *echorus.Echorus {
 	return nil
 }
 
-func (app *App) SetLogger(name string, logger *echorus.Echorus) bool {
+func (app *App) SetLogger(name string, logger util.Logger) bool {
 	if _, ok := app.loggers[name]; ok {
 		return false
 	}
@@ -99,7 +129,7 @@ func (app *App) SetLogger(name string, logger *echorus.Echorus) bool {
 }
 
 // DefaultLogger gets default logger
-func (app *App) DefaultLogger() *echorus.Echorus {
+func (app *App) DefaultLogger() util.Logger {
 	return app.Logger("")
 }
 
@@ -180,7 +210,7 @@ func (app *App) InitConfig() {
 	redis.Pwd = viper.GetString("redis.password")
 	config.Redis = redis
 
-	app.Config = config
+	app.Config = &config
 
 	// hook
 	app.runConfigHooks()
@@ -315,7 +345,7 @@ func (app *App) Start() {
 func (app *App) graceStart() error {
 	// Start server
 	go func() {
-		if err := app.Route.Start(fmt.Sprintf(":%d", app.Config.Port)); err != nil {
+		if err := app.Router.Start(fmt.Sprintf(":%d", app.Config.Port)); err != nil {
 			log.Fatal(err)
 		}
 	}()
@@ -327,7 +357,7 @@ func (app *App) graceStart() error {
 	<-quit
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := app.Route.Shutdown(ctx); err != nil {
+	if err := app.Router.Shutdown(ctx); err != nil {
 		log.Println(err)
 		return err
 	}
@@ -336,7 +366,7 @@ func (app *App) graceStart() error {
 }
 
 // NewLogger return a new
-func NewLogger(appName string, level elog.Lvl, config cfg.LogConfig) *echorus.Echorus {
+func NewLogger(appName string, level elog.Lvl, config cfg.LogConfig) util.Logger {
 	// new default Logger
 	var writer io.Writer
 	var spliter rotator.Spliter
