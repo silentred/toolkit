@@ -39,6 +39,12 @@ func init() {
 	flag.StringVar(&LogPath, "logPath", ".", "logPath is where log file will be")
 }
 
+type Application interface {
+}
+
+type WebApp interface {
+}
+
 // HookFunc when app starting and tearing down
 type HookFunc func(*App) error
 
