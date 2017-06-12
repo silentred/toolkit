@@ -61,6 +61,7 @@ type Application interface {
 	RegisterHook(HookType, ...HookFunc)
 }
 
+// WebApp interface for web application
 type WebApp interface {
 	Application
 	GetRouter()
@@ -112,6 +113,7 @@ func (app *App) Logger(name string) util.Logger {
 	return nil
 }
 
+// SetLogger set logger
 func (app *App) SetLogger(name string, logger util.Logger) bool {
 	if _, ok := app.loggers[name]; ok {
 		return false
@@ -146,14 +148,17 @@ func (app *App) Inject(object interface{}) error {
 	return app.Injector.Apply(object)
 }
 
+// SetConfig sets config ptr
 func (app *App) SetConfig(config *cfg.AppConfig) {
 	app.Config = config
 }
 
+// GetConfig gets config ptr
 func (app *App) GetConfig() *cfg.AppConfig {
 	return app.Config
 }
 
+// LoadConfig by mode from file
 func (app *App) LoadConfig(mode string) *cfg.AppConfig {
 	// use viper to resolve config.toml
 	if ConfigFile == "" {
