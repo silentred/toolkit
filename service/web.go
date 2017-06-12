@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/signal"
@@ -13,16 +12,11 @@ import (
 
 	"encoding/json"
 
-	"path/filepath"
-
 	"github.com/labstack/echo"
 	elog "github.com/labstack/gommon/log"
-	"github.com/silentred/echorus"
 	cfg "github.com/silentred/toolkit/config"
 	"github.com/silentred/toolkit/util"
 	"github.com/silentred/toolkit/util/container"
-	"github.com/silentred/toolkit/util/rotator"
-	"github.com/silentred/toolkit/util/strings"
 	"github.com/spf13/viper"
 )
 
@@ -45,7 +39,7 @@ var (
 
 func init() {
 	flag.StringVar(&AppMode, "mode", "", "RunMode of the application: dev or prod")
-	flag.StringVar(&ConfigFile, "cfg", "", "absolute path of config file")
+	flag.StringVar(&ConfigFile, "cfg", "config.toml", "absolute path of config file")
 	flag.StringVar(&LogPath, "logPath", ".", "logPath is where log file will be")
 }
 
@@ -155,7 +149,7 @@ func (app *App) Inject(object interface{}) error {
 }
 
 // InitConfig in format of toml
-func (app *App) InitConfig() {
+func initConfig(app *App) {
 	// use viper to resolve config.toml
 	if ConfigFile == "" {
 		var configName = app.getConfigFile()
@@ -188,7 +182,6 @@ func (app *App) InitConfig() {
 	l.Suffix = viper.GetString("app.logExt")
 	config.Log = l
 
-	// TODO: session config
 	// mysql config
 	mysql := cfg.MysqlConfig{}
 	mysqlConfig := viper.Get("mysql")
@@ -213,7 +206,7 @@ func (app *App) InitConfig() {
 	app.Config = &config
 
 	// hook
-	app.runConfigHooks()
+	//app.runConfigHooks()
 }
 
 func (app *App) getConfigFile() string {
@@ -224,7 +217,7 @@ func (app *App) getConfigFile() string {
 	return configName
 }
 
-func (app *App) InitLogger() {
+func initLogger(app *App) {
 	var level elog.Lvl
 	switch app.Config.Mode {
 	case cfg.ModeProd:
@@ -233,105 +226,69 @@ func (app *App) InitLogger() {
 		level = elog.DEBUG
 	}
 	// new default Logger
-	defaultLogger := NewLogger(app.Config.Name, level, app.Config.Log)
+	defaultLogger := util.NewLogger(app.Config.Name, level, app.Config.Log)
 
 	// set logger
 	app.loggers["default"] = defaultLogger
-	app.Route.Logger = defaultLogger
+	app.Router.Logger = defaultLogger
 
 	// hook
-	app.runLoggerHooks()
+	//app.runLoggerHooks()
 }
 
-func (app *App) runConfigHooks() {
+func (app *App) runHooks(ht HookType) {
 	var err error
-	for _, f := range app.configHooks {
-		if f != nil {
-			err = f(app)
-			if err != nil {
-				log.Fatal(err)
+	var hook *[]HookFunc
+
+	switch ht {
+	case ConfigHook:
+		hook = &app.configHooks
+	case LoggerHook:
+		hook = &app.loggerHooks
+	case ServiceHook:
+		hook = &app.serviceHooks
+	case RouterHook:
+		hook = &app.routeHooks
+	case ShutdownHook:
+		hook = &app.shutdownHooks
+	}
+
+	if *hook != nil {
+		for _, f := range *hook {
+			if f != nil {
+				err = f(app)
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 		}
 	}
 }
 
-func (app *App) runLoggerHooks() {
-	var err error
-	for _, f := range app.loggerHooks {
-		if f != nil {
-			err = f(app)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	}
-}
+func (app *App) RegisterHook(ht HookType, hooks ...HookFunc) {
+	var hook *[]HookFunc
 
-func (app *App) initService() {
-	// hoook
-	var err error
-	for _, f := range app.serviceHooks {
-		if f != nil {
-			err = f(app)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	}
-}
-
-func (app *App) initRoute() {
-	// hook
-	var err error
-	for _, f := range app.routeHooks {
-		if f != nil {
-			err = f(app)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
+	switch ht {
+	case ConfigHook:
+		hook = &app.configHooks
+	case LoggerHook:
+		hook = &app.loggerHooks
+	case ServiceHook:
+		hook = &app.serviceHooks
+	case RouterHook:
+		hook = &app.routeHooks
+	case ShutdownHook:
+		hook = &app.shutdownHooks
 	}
 
-}
-
-func (app *App) shutdown() {
-	var err error
-	for _, f := range app.shutdownHooks {
-		if f != nil {
-			err = f(app)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	}
-}
-
-// RegisterConfigHook at initConfig
-func (app *App) RegisterConfigHook(hooks ...HookFunc) {
-	app.configHooks = append(app.configHooks, hooks...)
-}
-
-func (app *App) RegisterLoggerHook(hooks ...HookFunc) {
-	app.loggerHooks = append(app.loggerHooks, hooks...)
-}
-
-func (app *App) RegisterServiceHook(hooks ...HookFunc) {
-	app.serviceHooks = append(app.serviceHooks, hooks...)
-}
-
-func (app *App) RegisterRouteHook(hooks ...HookFunc) {
-	app.routeHooks = append(app.routeHooks, hooks...)
-}
-
-func (app *App) RegisterShutdownHook(hooks ...HookFunc) {
-	app.shutdownHooks = append(app.shutdownHooks, hooks...)
+	*hook = append(*hook, hooks...)
 }
 
 func (app *App) Init() {
-	app.InitConfig()
-	app.InitLogger()
-	app.initService()
-	app.initRoute()
+	app.runHooks(ConfigHook)
+	app.runHooks(LoggerHook)
+	app.runHooks(ServiceHook)
+	app.runHooks(RouterHook)
 }
 
 // Start running the application
@@ -339,7 +296,7 @@ func (app *App) Start() {
 	app.Init()
 	//app.route.Start(fmt.Sprintf(":%d", app.config.Port))
 	app.graceStart()
-	app.shutdown()
+	app.runHooks(ShutdownHook)
 }
 
 func (app *App) graceStart() error {
@@ -363,51 +320,4 @@ func (app *App) graceStart() error {
 	}
 
 	return nil
-}
-
-// NewLogger return a new
-func NewLogger(appName string, level elog.Lvl, config cfg.LogConfig) util.Logger {
-	// new default Logger
-	var writer io.Writer
-	var spliter rotator.Spliter
-	var err error
-
-	if config.Suffix == "" {
-		config.Suffix = "log"
-	}
-
-	switch config.Providor {
-	case cfg.ProvidorFile:
-		if config.RotateEnable {
-			switch config.RotateMode {
-			case cfg.RotateByDay:
-				spliter = rotator.NewDaySpliter()
-			case cfg.RotateBySize:
-				limitSize, err := strings.ParseByteSize(config.RotateLimit) // 100 MB
-				if err != nil {
-					log.Fatal(err)
-				}
-				spliter = rotator.NewSizeSpliter(uint64(limitSize))
-			default:
-				log.Fatalf("invalid RotateMode: %s", config.RotateMode)
-			}
-
-			writer = rotator.NewFileRotator(config.LogPath, appName, config.Suffix, spliter)
-		} else {
-			writer, err = os.Open(filepath.Join(config.LogPath, appName+"."+config.Suffix))
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	default:
-		writer = os.Stdout
-	}
-
-	logger := echorus.NewLogger()
-	logger.SetPrefix(appName)
-	logger.SetFormat(echorus.TextFormat)
-	logger.SetOutput(writer)
-	logger.SetLevel(level)
-
-	return logger
 }
