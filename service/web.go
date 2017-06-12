@@ -35,6 +35,8 @@ var (
 	AppMode    string
 	ConfigFile string
 	LogPath    string
+
+	_ Application = &App{}
 )
 
 func init() {
@@ -45,22 +47,18 @@ func init() {
 
 type Application interface {
 	// Container
-	Get()
-	Set()
-	Inject()
+	Set(key string, object interface{}, ifacePtr interface{})
+	Get(key string) interface{}
+	Inject(object interface{}) error
 	// load from file
-	LoadConfig(mode string) cfg.AppConfig
-	SetConfig()
-	GetConfig()
+	LoadConfig(mode string) *cfg.AppConfig
+	SetConfig(*cfg.AppConfig)
+	GetConfig() *cfg.AppConfig
 
 	DefaultLogger() util.Logger
 	Logger(name string) util.Logger
-	// goes before InitService
-	InitLogger()
-	// initalize db and other common service
-	InitService()
 
-	RegisterHook(HookType, HookFunc)
+	RegisterHook(HookType, ...HookFunc)
 }
 
 type WebApp interface {
@@ -148,11 +146,18 @@ func (app *App) Inject(object interface{}) error {
 	return app.Injector.Apply(object)
 }
 
-// InitConfig in format of toml
-func initConfig(app *App) {
+func (app *App) SetConfig(config *cfg.AppConfig) {
+	app.Config = config
+}
+
+func (app *App) GetConfig() *cfg.AppConfig {
+	return app.Config
+}
+
+func (app *App) LoadConfig(mode string) *cfg.AppConfig {
 	// use viper to resolve config.toml
 	if ConfigFile == "" {
-		var configName = app.getConfigFile()
+		var configName = getConfigFile(mode)
 		viper.AddConfigPath(".")
 		viper.AddConfigPath(util.SelfDir())
 		viper.SetConfigName(configName)
@@ -203,16 +208,18 @@ func initConfig(app *App) {
 	redis.Pwd = viper.GetString("redis.password")
 	config.Redis = redis
 
-	app.Config = &config
-
-	// hook
-	//app.runConfigHooks()
+	return &config
 }
 
-func (app *App) getConfigFile() string {
+// initConfig loads config from toml file and setConfig
+func initConfig(app *App) {
+	app.SetConfig(app.LoadConfig(AppMode))
+}
+
+func getConfigFile(mode string) string {
 	var configName = "config"
-	if AppMode != "" {
-		configName = fmt.Sprintf("%s.%s", "config", AppMode)
+	if mode != "" {
+		configName = fmt.Sprintf("%s.%s", "config", mode)
 	}
 	return configName
 }
