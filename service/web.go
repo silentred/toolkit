@@ -81,8 +81,9 @@ func (app *WebApp) graceStart() error {
 
 func initRouterLogger(app Application) error {
 	if webApp, ok := app.(WebApplication); ok {
-		webApp.GetRouter().Logger = app.DefaultLogger()
-		return nil
+		var err error
+		webApp.GetRouter().Logger, err = app.DefaultLogger()
+		return err
 	}
 	return fmt.Errorf("app is not WebApplication")
 }

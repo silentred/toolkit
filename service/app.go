@@ -20,10 +20,15 @@ type HookFunc func(Application) error
 type HookType byte
 
 const (
+	// ConfigHook is a hook type for config
 	ConfigHook HookType = iota
+	// LoggerHook is a hook type for logger
 	LoggerHook
+	// ServiceHook is a hook type for service
 	ServiceHook
+	// RouterHook is a hook type for router
 	RouterHook
+	// ShutdownHook is a hook type for shutting down
 	ShutdownHook
 )
 
