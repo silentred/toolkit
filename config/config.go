@@ -44,6 +44,7 @@ type LogConfig struct {
 
 type MysqlConfig struct {
 	Instances []MysqlInstance
+	Ping      bool
 }
 
 type MysqlInstance struct {
@@ -66,6 +67,7 @@ type RedisInstance struct {
 	Pwd  string `json:"password"`
 	Port int    `json:"port"`
 	Db   int    `json:"database"`
+	Ping bool   `json:"ping"`
 }
 
 func (inst RedisInstance) Address() string {

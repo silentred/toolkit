@@ -14,6 +14,9 @@ logExt = "log"
 enable = false
 provider = "file"
 
+[mysql_manager]
+ping = false
+
 [[mysql]]
 name="master"
 host="localhost"
@@ -24,7 +27,7 @@ password=""
 read_only=false
 
 [[mysql]]
-name="slave"
+name="slave-01"
 host="localhost"
 port=3306
 user="root"
@@ -37,3 +40,4 @@ host="localhost"
 port= 6379
 db = 0
 password = ""
+ping = false

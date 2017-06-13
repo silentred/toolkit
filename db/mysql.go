@@ -12,24 +12,28 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
-	"github.com/silentred/kassadin"
+	"github.com/silentred/toolkit/config"
+	"github.com/silentred/toolkit/service"
 )
 
-const (
+var (
+	// MaxIdle of mysql connection
 	MaxIdle = 10
+	// MaxOpen of mysql connection
 	MaxOpen = 20
 )
 
+// MysqlManager for mysql connection
 type MysqlManager struct {
-	Application  *kassadin.App `inject`
-	Config       kassadin.MysqlConfig
+	App          service.Application `inject:"app"`
+	Config       config.MysqlConfig
 	databases    map[string]*xorm.Engine
 	readOnlyRing *ring.Ring
 	master       *xorm.Engine
 }
 
 // NewMysqlManager returns a new MysqlManager
-func NewMysqlManager(app *kassadin.App, config kassadin.MysqlConfig) (*MysqlManager, error) {
+func NewMysqlManager(app service.Application, config config.MysqlConfig) (*MysqlManager, error) {
 	var readOnlyLength int
 	var err error
 	var engine *xorm.Engine
@@ -41,7 +45,7 @@ func NewMysqlManager(app *kassadin.App, config kassadin.MysqlConfig) (*MysqlMana
 	}
 
 	mm := &MysqlManager{
-		Application:  app,
+		App:          app,
 		Config:       config,
 		databases:    make(map[string]*xorm.Engine),
 		readOnlyRing: ring.New(readOnlyLength),
@@ -75,7 +79,7 @@ func NewMysqlManager(app *kassadin.App, config kassadin.MysqlConfig) (*MysqlMana
 	return mm, nil
 }
 
-func (mm *MysqlManager) newORM(mysql kassadin.MysqlInstance) (*xorm.Engine, error) {
+func (mm *MysqlManager) newORM(mysql config.MysqlInstance) (*xorm.Engine, error) {
 	var output io.Writer = os.Stdout
 
 	orm, err := xorm.NewEngine("mysql", mysql.String())
@@ -85,12 +89,12 @@ func (mm *MysqlManager) newORM(mysql kassadin.MysqlInstance) (*xorm.Engine, erro
 	orm.SetMaxIdleConns(MaxIdle)
 	orm.SetMaxOpenConns(MaxOpen)
 
-	if mm.Application != nil {
-		output = mm.Application.Logger("default").Output()
+	if mm.App != nil {
+		output = mm.App.Logger("default").Output()
 		// set Logger output
 		logger := xorm.NewSimpleLogger(output)
 
-		if mm.Application.Config.Mode == kassadin.ModeDev {
+		if mm.App.GetConfig().Mode == config.ModeDev {
 			orm.ShowSQL(true)
 			orm.ShowExecTime(true)
 			logger.ShowSQL(true)
@@ -101,10 +105,13 @@ func (mm *MysqlManager) newORM(mysql kassadin.MysqlInstance) (*xorm.Engine, erro
 		orm.SetLogger(logger)
 	}
 
-	err = orm.Ping()
-	if err != nil {
-		log.Fatal(err)
+	if mm.Config.Ping {
+		err = orm.Ping()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
+
 	return orm, nil
 }
 

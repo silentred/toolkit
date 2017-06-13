@@ -1,7 +1,7 @@
 [app]
 runMode = "dev"
 name = "webapp"
-port = 8080
+port = 18080
 
 logProvider = "file"
 logPath = "/tmp"
@@ -12,6 +12,9 @@ logLimit = "100MB"
 [session]
 enable = false
 provider = "file"
+
+[mysql_manager]
+ping = false
 
 [[mysql]]
 name="master"
@@ -26,3 +29,4 @@ read_only=false
 host="localhost"
 port= 6379
 db = 0
+ping = false

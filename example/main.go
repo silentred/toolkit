@@ -5,41 +5,44 @@ import (
 	"log"
 
 	"github.com/labstack/echo"
-	"github.com/silentred/kassadin"
-	"github.com/silentred/kassadin/db"
+
+	"github.com/silentred/toolkit/db"
+	"github.com/silentred/toolkit/service"
 )
 
 func main() {
 	flag.Parse()
 
-	app := kassadin.NewApp()
-	app.RegisterConfigHook(initConfig)
-	app.RegisterRouteHook(initRoute)
-	app.RegisterServiceHook(initService)
-	app.Start()
+	app := service.NewWebApp()
+	app.RegisterHook(service.ConfigHook, initConfig)
+	app.RegisterHook(service.RouterHook, initRoute)
+	app.RegisterHook(service.ServiceHook, initService)
+
+	app.ListenAndServe()
 }
 
-func initConfig(app *kassadin.App) error {
+func initConfig(app service.Application) error {
 	return nil
 }
 
-func initService(app *kassadin.App) error {
-	mm, err := db.NewMysqlManager(app, app.Config.Mysql)
+func initService(app service.Application) error {
+	mm, err := db.NewMysqlManager(app, app.GetConfig().Mysql)
 	if err != nil {
 		log.Fatal(err)
 	}
 	app.Set("mysql", mm, nil)
 
-	redis := db.NewRedisClient(app.Config.Redis)
+	redis := db.NewRedisClient(app.GetConfig().Redis)
 	app.Set("redis", redis, nil)
 
 	return nil
 }
 
-func initRoute(app *kassadin.App) error {
-	app.Route.GET("/", func(ctx echo.Context) error {
-		return ctx.String(200, "hello world")
-	})
-
+func initRoute(app service.Application) error {
+	if web, ok := app.(service.WebApplication); ok {
+		web.GetRouter().GET("/", func(ctx echo.Context) error {
+			return ctx.String(200, "hello world")
+		})
+	}
 	return nil
 }
