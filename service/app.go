@@ -1,12 +1,10 @@
 package service
 
 import (
+	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
-
-	"flag"
-
-	"encoding/json"
 
 	elog "github.com/labstack/gommon/log"
 	cfg "github.com/silentred/toolkit/config"
