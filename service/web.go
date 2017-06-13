@@ -32,19 +32,9 @@ type WebApp struct {
 // NewWebApp returns a new web app
 func NewWebApp() *WebApp {
 	app := &WebApp{
-		App: NewApp(),
-		// Store:    &container.Map{},
-		// Injector: container.NewInjector(),
-		// loggers:  make(map[string]util.Logger),
+		App:    NewApp(),
 		Router: echo.New(),
 	}
-	// register App itself
-	app.Set("app", app, new(Application))
-	// register default hooks
-	app.RegisterHook(ConfigHook, initConfig)
-	app.RegisterHook(LoggerHook, initLogger)
-	app.RegisterHook(ServiceHook, initMySQL, initRedis)
-
 	return app
 }
 
