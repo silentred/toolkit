@@ -31,9 +31,11 @@ const (
 
 var (
 	// AppMode is App's running envirenment. Valid values are dev and prod
-	AppMode    string
+	AppMode string
+	// ConfigFile is the absolute path of config file
 	ConfigFile string
-	LogPath    string
+	// LogPath is where log file will be
+	LogPath string
 
 	_ Application = &App{}
 )
@@ -55,9 +57,9 @@ type Application interface {
 	SetConfig(*cfg.AppConfig)
 	GetConfig() *cfg.AppConfig
 	// logger
-	DefaultLogger() util.Logger
-	Logger(name string) util.Logger
-	SetLogger(string, util.Logger) bool
+	DefaultLogger() (util.Logger, error)
+	Logger(name string) (util.Logger, error)
+	SetLogger(string, util.Logger)
 	// initialize
 	Initialize()
 
@@ -70,8 +72,8 @@ type App struct {
 	Injector container.Injector
 	//Router   *echo.Echo
 
-	loggers map[string]util.Logger
-	Config  *cfg.AppConfig
+	//loggers map[string]util.Logger
+	Config *cfg.AppConfig
 
 	configHooks   []HookFunc
 	loggerHooks   []HookFunc
@@ -85,7 +87,7 @@ func NewApp() App {
 	app := App{
 		Store:    &container.Map{},
 		Injector: container.NewInjector(),
-		loggers:  make(map[string]util.Logger),
+		//loggers:  make(map[string]util.Logger),
 	}
 	// register App itself
 	app.Set("app", app, new(Application))
@@ -98,29 +100,23 @@ func NewApp() App {
 }
 
 // Logger of name
-func (app *App) Logger(name string) util.Logger {
-	if name == "" {
-		return app.loggers["default"]
+func (app *App) Logger(name string) (util.Logger, error) {
+	var key = fmt.Sprintf("logger.%s", name)
+	if l, ok := app.Get(key).(util.Logger); ok {
+		return l, nil
 	}
-	if l, ok := app.loggers[name]; ok {
-		return l
-	}
-
-	return nil
+	return nil, fmt.Errorf("not found key: %s", key)
 }
 
 // SetLogger set logger
-func (app *App) SetLogger(name string, logger util.Logger) bool {
-	if _, ok := app.loggers[name]; ok {
-		return false
-	}
-	app.loggers[name] = logger
-	return true
+func (app *App) SetLogger(name string, logger util.Logger) {
+	var key = fmt.Sprintf("logger.%s", name)
+	app.Set(key, logger, nil)
 }
 
 // DefaultLogger gets default logger
-func (app *App) DefaultLogger() util.Logger {
-	return app.Logger("")
+func (app *App) DefaultLogger() (util.Logger, error) {
+	return app.Logger("logger.default")
 }
 
 // Set object into app.Store and Map it into app.Injector
@@ -178,6 +174,18 @@ func (app *App) LoadConfig(mode string) *cfg.AppConfig {
 	config.Port = viper.GetInt("app.port")
 
 	// log config
+	loggerConfig(&config)
+
+	// mysql config
+	mysqlConfig(&config)
+
+	// redis config
+	redisConfig(&config)
+
+	return &config
+}
+
+func loggerConfig(c *cfg.AppConfig) {
 	l := cfg.LogConfig{}
 	l.Name = "default"
 	l.LogPath = viper.GetString("app.logPath")
@@ -186,9 +194,10 @@ func (app *App) LoadConfig(mode string) *cfg.AppConfig {
 	l.RotateMode = viper.GetString("app.logRotateType")
 	l.RotateLimit = viper.GetString("app.logLimit")
 	l.Suffix = viper.GetString("app.logExt")
-	config.Log = l
+	c.Log = l
+}
 
-	// mysql config
+func mysqlConfig(c *cfg.AppConfig) {
 	mysql := cfg.MysqlConfig{}
 	mysqlConfig := viper.Get("mysql")
 	mysqlConfigBytes, err := json.Marshal(mysqlConfig)
@@ -200,18 +209,17 @@ func (app *App) LoadConfig(mode string) *cfg.AppConfig {
 		log.Fatal(err)
 	}
 	mysql.Ping = viper.GetBool("mysql_manager.ping")
-	config.Mysql = mysql
+	c.Mysql = mysql
+}
 
-	// redis config
+func redisConfig(c *cfg.AppConfig) {
 	redis := cfg.RedisInstance{}
 	redis.Host = viper.GetString("redis.host")
 	redis.Port = viper.GetInt("redis.port")
 	redis.Db = viper.GetInt("redis.db")
 	redis.Pwd = viper.GetString("redis.password")
 	redis.Ping = viper.GetBool("redis.ping")
-	config.Redis = redis
-
-	return &config
+	c.Redis = redis
 }
 
 func getConfigFile(mode string) string {
