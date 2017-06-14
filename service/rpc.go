@@ -37,7 +37,7 @@ func NewGrpcApp(s *grpc.Server) *GrpcApp {
 
 // ListenAndServe implements the GrpcApplication interface
 func (app *GrpcApp) ListenAndServe() {
-	app.Initialize()
+	Initialize(app)
 
 	var port = fmt.Sprintf(":%d", app.GetConfig().Port)
 	l, err := net.Listen("tcp", port)
@@ -85,7 +85,7 @@ func (app *GrpcApp) handleSignal() {
 		switch s {
 		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT:
 			app.server.GracefulStop()
-			app.runHooks(ShutdownHook)
+			runHooks(ShutdownHook, app)
 			return
 		case syscall.SIGHUP:
 			// TODO reload

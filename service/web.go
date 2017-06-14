@@ -51,12 +51,12 @@ func (app *WebApp) GetRouter() *echo.Echo {
 // ListenAndServe the web application
 func (app *WebApp) ListenAndServe() {
 	app.RegisterHook(LoggerHook, initRouterLogger)
-	app.Initialize()
-	app.graceStart()
-	app.runHooks(ShutdownHook)
+	Initialize(app)
+	graceStart(app)
+	runHooks(ShutdownHook, app)
 }
 
-func (app *WebApp) graceStart() error {
+func graceStart(app *WebApp) error {
 	// Start server
 	go func() {
 		if err := app.Router.Start(fmt.Sprintf(":%d", app.Config.Port)); err != nil {
@@ -80,10 +80,9 @@ func (app *WebApp) graceStart() error {
 }
 
 func initRouterLogger(app Application) error {
-	if webApp, ok := app.(WebApplication); ok {
-		var err error
-		webApp.GetRouter().Logger, err = app.DefaultLogger()
-		return err
+	if webApp, ok := app.(*WebApp); ok {
+		webApp.GetRouter().Logger = app.DefaultLogger()
+		return nil
 	}
-	return fmt.Errorf("app is not WebApplication")
+	return fmt.Errorf("initializing Echo.Logger: app is not *WebApp")
 }

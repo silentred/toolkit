@@ -90,7 +90,7 @@ func (mm *MysqlManager) newORM(mysql config.MysqlInstance) (*xorm.Engine, error)
 	orm.SetMaxOpenConns(MaxOpen)
 
 	if mm.App != nil {
-		output = mm.App.Logger("default").Output()
+		output = mm.App.DefaultLogger().Output()
 		// set Logger output
 		logger := xorm.NewSimpleLogger(output)
 

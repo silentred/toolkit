@@ -55,16 +55,16 @@ type Application interface {
 	Set(key string, object interface{}, ifacePtr interface{})
 	Get(key string) interface{}
 	Inject(object interface{}) error
+	// hook
+	GetHook(HookType) *[]HookFunc
 	// load from file
 	LoadConfig(mode string) *cfg.AppConfig
 	SetConfig(*cfg.AppConfig)
 	GetConfig() *cfg.AppConfig
 	// logger
-	DefaultLogger() (util.Logger, error)
+	DefaultLogger() util.Logger
 	Logger(name string) (util.Logger, error)
 	SetLogger(string, util.Logger)
-	// initialize
-	Initialize()
 
 	RegisterHook(HookType, ...HookFunc)
 }
@@ -118,8 +118,12 @@ func (app *App) SetLogger(name string, logger util.Logger) {
 }
 
 // DefaultLogger gets default logger
-func (app *App) DefaultLogger() (util.Logger, error) {
-	return app.Logger("logger.default")
+func (app *App) DefaultLogger() util.Logger {
+	l, err := app.Logger("default")
+	if err != nil {
+		log.Fatalf("default logger is not present, err: %v", err)
+	}
+	return l
 }
 
 // Set object into app.Store and Map it into app.Injector
@@ -141,6 +145,26 @@ func (app *App) Get(key string) interface{} {
 // before this method is called. Please use app.Set() to make this happen.
 func (app *App) Inject(object interface{}) error {
 	return app.Injector.Apply(object)
+}
+
+// GetHook returns hook slice by type
+func (app *App) GetHook(ht HookType) *[]HookFunc {
+	var hook *[]HookFunc
+
+	switch ht {
+	case ConfigHook:
+		hook = &app.configHooks
+	case LoggerHook:
+		hook = &app.loggerHooks
+	case ServiceHook:
+		hook = &app.serviceHooks
+	case RouterHook:
+		hook = &app.routeHooks
+	case ShutdownHook:
+		hook = &app.shutdownHooks
+	}
+
+	return hook
 }
 
 // SetConfig sets config ptr
@@ -262,22 +286,11 @@ func initRedis(app Application) error {
 	return nil
 }
 
-func (app *App) runHooks(ht HookType) {
+func runHooks(ht HookType, app Application) {
 	var err error
 	var hook *[]HookFunc
 
-	switch ht {
-	case ConfigHook:
-		hook = &app.configHooks
-	case LoggerHook:
-		hook = &app.loggerHooks
-	case ServiceHook:
-		hook = &app.serviceHooks
-	case RouterHook:
-		hook = &app.routeHooks
-	case ShutdownHook:
-		hook = &app.shutdownHooks
-	}
+	hook = app.GetHook(ht)
 
 	if *hook != nil {
 		for _, f := range *hook {
@@ -312,9 +325,9 @@ func (app *App) RegisterHook(ht HookType, hooks ...HookFunc) {
 }
 
 // Initialize the objects
-func (app *App) Initialize() {
-	app.runHooks(ConfigHook)
-	app.runHooks(LoggerHook)
-	app.runHooks(ServiceHook)
-	app.runHooks(RouterHook)
+func Initialize(app Application) {
+	runHooks(ConfigHook, app)
+	runHooks(LoggerHook, app)
+	runHooks(ServiceHook, app)
+	runHooks(RouterHook, app)
 }
