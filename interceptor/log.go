@@ -5,13 +5,13 @@ import (
 	"time"
 
 	"github.com/labstack/gommon/log"
-	"github.com/silentred/echorus"
-
+	"github.com/silentred/toolkit/util"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
-func NewLogInterceptor(logger *echorus.Echorus) grpc.UnaryServerInterceptor {
+// NewLogInterceptor returns a log interceptor for gRPC
+func NewLogInterceptor(logger util.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		start := time.Now()
 		resp, err = handler(ctx, req)

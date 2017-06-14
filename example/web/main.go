@@ -17,7 +17,7 @@ func main() {
 	app.RegisterHook(service.ConfigHook, initConfig)
 	app.RegisterHook(service.RouterHook, initRoute)
 	app.RegisterHook(service.ServiceHook, initService)
-
+	app.Initialize()
 	app.ListenAndServe()
 }
 

@@ -65,6 +65,8 @@ type Application interface {
 	DefaultLogger() util.Logger
 	Logger(name string) (util.Logger, error)
 	SetLogger(string, util.Logger)
+	// init
+	Initialize()
 
 	RegisterHook(HookType, ...HookFunc)
 }
@@ -175,6 +177,11 @@ func (app *App) SetConfig(config *cfg.AppConfig) {
 // GetConfig gets config ptr
 func (app *App) GetConfig() *cfg.AppConfig {
 	return app.Config
+}
+
+// Initialize application
+func (app *App) Initialize() {
+	initialize(app)
 }
 
 // LoadConfig by mode from file
@@ -310,8 +317,8 @@ func (app *App) RegisterHook(ht HookType, hooks ...HookFunc) {
 	*hook = append(*hook, hooks...)
 }
 
-// Initialize the objects
-func Initialize(app Application) {
+// initialize the objects
+func initialize(app Application) {
 	runHooks(ConfigHook, app)
 	runHooks(LoggerHook, app)
 	runHooks(ServiceHook, app)

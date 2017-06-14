@@ -35,10 +35,13 @@ func NewGrpcApp(s *grpc.Server) *GrpcApp {
 	return app
 }
 
+// Initialize web application
+func (app *GrpcApp) Initialize() {
+	initialize(app)
+}
+
 // ListenAndServe implements the GrpcApplication interface
 func (app *GrpcApp) ListenAndServe() {
-	Initialize(app)
-
 	var port = fmt.Sprintf(":%d", app.GetConfig().Port)
 	l, err := net.Listen("tcp", port)
 	if err != nil {

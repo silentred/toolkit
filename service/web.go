@@ -38,6 +38,12 @@ func NewWebApp() *WebApp {
 	return app
 }
 
+// Initialize web application
+func (app *WebApp) Initialize() {
+	app.RegisterHook(LoggerHook, initRouterLogger)
+	initialize(app)
+}
+
 // SetRouter sets router
 func (app *WebApp) SetRouter(r *echo.Echo) {
 	app.Router = r
@@ -50,8 +56,6 @@ func (app *WebApp) GetRouter() *echo.Echo {
 
 // ListenAndServe the web application
 func (app *WebApp) ListenAndServe() {
-	app.RegisterHook(LoggerHook, initRouterLogger)
-	Initialize(app)
 	graceStart(app)
 	runHooks(ShutdownHook, app)
 }

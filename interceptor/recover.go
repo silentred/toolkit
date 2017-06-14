@@ -3,19 +3,19 @@ package interceptor
 import (
 	"runtime"
 
-	"github.com/silentred/echorus"
-
+	"github.com/silentred/toolkit/util"
 	"golang.org/x/net/context"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
 
 const (
+	// MaxStackSize when recovering panic
 	MaxStackSize = 4096
 )
 
-func NewRecovery(logger *echorus.Echorus) grpc.UnaryServerInterceptor {
+// NewRecovery return a recover interceptor for gRPC
+func NewRecovery(logger util.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		// recovery func
 		defer func() {

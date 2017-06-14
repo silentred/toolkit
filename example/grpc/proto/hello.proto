@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package proto;
+
+service Greeter {
+  rpc SayHello (HelloReq) returns (HelloResp) {}
+}
+
+message HelloReq {
+  string name = 1;
+  int32 times = 2;
+}
+
+message HelloResp {
+    string message = 1;
+}
