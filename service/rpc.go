@@ -99,3 +99,21 @@ func (app *GrpcApp) handleSignal() {
 		}
 	}
 }
+
+// ListenAndServe the gRPC server at addr
+func ListenAndServe(s *grpc.Server, addr string) {
+	l, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	info := s.GetServiceInfo()
+	if len(info) == 0 {
+		log.Fatalf("grpc server has to register service first. %v", info)
+	}
+
+	err = s.Serve(l)
+	if err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+}
