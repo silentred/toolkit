@@ -10,17 +10,17 @@ import (
 )
 
 var (
-	Host string
+	host string
 )
 
 func init() {
-	flag.StringVar(&Host, "h", "127.0.0.1:28080", "gRPC server address")
+	flag.StringVar(&host, "h", "127.0.0.1:28080", "gRPC server address")
 }
 
 func main() {
 	flag.Parse()
 
-	conn, err := grpc.Dial(Host, grpc.WithInsecure())
+	conn, err := grpc.Dial(host, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
