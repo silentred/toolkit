@@ -196,9 +196,7 @@ func (app *App) LoadConfig(mode string) *cfg.AppConfig {
 
 	// make AppConfig; set data from viper
 	config := cfg.AppConfig{}
-	config.Name = viper.GetString("app.name")
-	config.Mode = viper.GetString("app.runMode")
-	config.Port = viper.GetInt("app.port")
+	appConfig(&config)
 
 	// log config
 	loggerConfig(&config)
@@ -210,6 +208,12 @@ func (app *App) LoadConfig(mode string) *cfg.AppConfig {
 	redisConfig(&config)
 
 	return &config
+}
+
+func appConfig(c *cfg.AppConfig) {
+	c.Name = viper.GetString("app.name")
+	c.Mode = viper.GetString("app.runMode")
+	c.Port = viper.GetInt("app.port")
 }
 
 func loggerConfig(c *cfg.AppConfig) {
@@ -288,15 +292,11 @@ func initRedis(app Application) error {
 
 func runHooks(ht HookType, app Application) {
 	var err error
-	var hook *[]HookFunc
-
-	hook = app.GetHook(ht)
-
+	var hook = app.GetHook(ht)
 	if *hook != nil {
 		for _, f := range *hook {
 			if f != nil {
-				err = f(app)
-				if err != nil {
+				if err = f(app); err != nil {
 					log.Fatal(err)
 				}
 			}
@@ -306,21 +306,7 @@ func runHooks(ht HookType, app Application) {
 
 // RegisterHook in application's starting process
 func (app *App) RegisterHook(ht HookType, hooks ...HookFunc) {
-	var hook *[]HookFunc
-
-	switch ht {
-	case ConfigHook:
-		hook = &app.configHooks
-	case LoggerHook:
-		hook = &app.loggerHooks
-	case ServiceHook:
-		hook = &app.serviceHooks
-	case RouterHook:
-		hook = &app.routeHooks
-	case ShutdownHook:
-		hook = &app.shutdownHooks
-	}
-
+	var hook = app.GetHook(ht)
 	*hook = append(*hook, hooks...)
 }
 
