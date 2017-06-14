@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/silentred/toolkit/cmd"
 	cli "gopkg.in/urfave/cli.v1"
 )
 
@@ -48,11 +49,11 @@ func main() {
 				cli.StringFlag{
 					Name:        "src",
 					Usage:       "Source path in the GOPATH. For example: github.com/igetserver",
-					Value:       "github.com/igetserver",
+					Value:       "gitlab.luojilab.com/igetserver",
 					Destination: &sourcePath,
 				},
 			},
-			Action: newAction,
+			Action: NewProjectAction,
 		},
 	}
 	app.Run(os.Args)
@@ -63,7 +64,11 @@ func versionPrinter(ctx *cli.Context) {
 	cli.ShowAppHelp(ctx)
 }
 
-func newAction(ctx *cli.Context) error {
-	fmt.Println(sourcePath)
+func NewProjectAction(ctx *cli.Context) error {
+	appName := ctx.Args().First()
+	if appName == "" {
+		return fmt.Errorf("missing app_name as the first argument. try `toolkit new myapp`")
+	}
+	cmd.RunNew(sourcePath, appName)
 	return nil
 }
