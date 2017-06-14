@@ -2,7 +2,7 @@
 runMode = "dev"
 name = "webapp"
 port = 8080
-
+// logger
 logProvider = "file"
 logPath = "/tmp"
 logRotate = true
@@ -10,11 +10,12 @@ logRotateType = "day"
 logLimit = "100MB"
 logExt = "log"
 
-[session]
-enable = false
-provider = "file"
-
 [mysql_manager]
+init = true
+ping = false
+
+[redis_manager]
+init = true
 ping = false
 
 [[mysql]]

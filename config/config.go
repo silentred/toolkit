@@ -16,14 +16,13 @@ const (
 )
 
 type AppConfig struct {
-	Name string
-	Mode string
-	Port int
-
+	Name  string
+	Mode  string
+	Port  int
 	Sess  SessionConfig
 	Log   LogConfig
 	Mysql MysqlConfig
-	Redis RedisInstance
+	Redis RedisConfig
 }
 
 type SessionConfig struct {
@@ -44,6 +43,7 @@ type LogConfig struct {
 
 type MysqlConfig struct {
 	Instances []MysqlInstance
+	InitMySQL bool
 	Ping      bool
 }
 
@@ -61,13 +61,18 @@ func (inst MysqlInstance) String() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8", inst.User, inst.Pwd, inst.Host, inst.Port, inst.Db)
 }
 
+type RedisConfig struct {
+	InitRedis bool
+	Ping      bool
+	RedisInstance
+}
+
 type RedisInstance struct {
 	Name string `json:"name"`
 	Host string `json:"host"`
 	Pwd  string `json:"password"`
 	Port int    `json:"port"`
 	Db   int    `json:"database"`
-	Ping bool   `json:"ping"`
 }
 
 func (inst RedisInstance) Address() string {

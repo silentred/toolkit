@@ -32,6 +32,7 @@ func NewGrpcApp(s *grpc.Server) *GrpcApp {
 		App:    NewApp(),
 		server: s,
 	}
+	app.Set("app.rpc", app, new(GrpcApplication))
 	return app
 }
 

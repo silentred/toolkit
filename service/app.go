@@ -224,14 +224,15 @@ func appConfig(c *cfg.AppConfig) {
 }
 
 func loggerConfig(c *cfg.AppConfig) {
-	l := cfg.LogConfig{}
-	l.Name = "default"
-	l.LogPath = viper.GetString("app.logPath")
-	l.Providor = viper.GetString("app.logProvider")
-	l.RotateEnable = viper.GetBool("app.logRotate")
-	l.RotateMode = viper.GetString("app.logRotateType")
-	l.RotateLimit = viper.GetString("app.logLimit")
-	l.Suffix = viper.GetString("app.logExt")
+	l := cfg.LogConfig{
+		Name:         "default",
+		LogPath:      viper.GetString("app.logPath"),
+		Providor:     viper.GetString("app.logProvider"),
+		RotateEnable: viper.GetBool("app.logRotate"),
+		RotateMode:   viper.GetString("app.logRotateType"),
+		RotateLimit:  viper.GetString("app.logLimit"),
+		Suffix:       viper.GetString("app.logExt"),
+	}
 	c.Log = l
 }
 
@@ -247,17 +248,24 @@ func mysqlConfig(c *cfg.AppConfig) {
 		log.Fatal(err)
 	}
 	mysql.Ping = viper.GetBool("mysql_manager.ping")
+	mysql.InitMySQL = viper.GetBool("mysql_manager.init")
 	c.Mysql = mysql
 }
 
 func redisConfig(c *cfg.AppConfig) {
-	redis := cfg.RedisInstance{}
-	redis.Host = viper.GetString("redis.host")
-	redis.Port = viper.GetInt("redis.port")
-	redis.Db = viper.GetInt("redis.db")
-	redis.Pwd = viper.GetString("redis.password")
-	redis.Ping = viper.GetBool("redis.ping")
-	c.Redis = redis
+	redis := cfg.RedisInstance{
+		Host: viper.GetString("redis.host"),
+		Port: viper.GetInt("redis.port"),
+		Db:   viper.GetInt("redis.db"),
+		Pwd:  viper.GetString("redis.password"),
+	}
+	redisConfig := cfg.RedisConfig{
+		Ping:          viper.GetBool("redis_manager.ping"),
+		InitRedis:     viper.GetBool("redis_manager.init"),
+		RedisInstance: redis,
+	}
+
+	c.Redis = redisConfig
 }
 
 func getConfigFile(mode string) string {
@@ -286,14 +294,6 @@ func initLogger(app Application) error {
 	defaultLogger := util.NewLogger(app.GetConfig().Name, level, app.GetConfig().Log)
 	app.SetLogger("default", defaultLogger)
 
-	return nil
-}
-
-func initMySQL(app Application) error {
-	return nil
-}
-
-func initRedis(app Application) error {
 	return nil
 }
 

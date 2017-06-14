@@ -10,6 +10,11 @@ logRotateType = "day"
 logLimit = "100MB"
 
 [mysql_manager]
+init = true
+ping = false
+
+[redis_manager]
+init = true
 ping = false
 
 [[mysql]]

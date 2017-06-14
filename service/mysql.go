@@ -1,4 +1,4 @@
-package db
+package service
 
 import (
 	"container/ring"
@@ -13,19 +13,18 @@ import (
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
 	"github.com/silentred/toolkit/config"
-	"github.com/silentred/toolkit/service"
 )
 
 var (
-	// MaxIdle of mysql connection
-	MaxIdle = 10
-	// MaxOpen of mysql connection
-	MaxOpen = 20
+	// MySQLMaxIdle of connection
+	MySQLMaxIdle = 10
+	// MySQLMaxOpen of connection
+	MySQLMaxOpen = 20
 )
 
 // MysqlManager for mysql connection
 type MysqlManager struct {
-	App          service.Application `inject:"app"`
+	App          Application `inject:"app"`
 	Config       config.MysqlConfig
 	databases    map[string]*xorm.Engine
 	readOnlyRing *ring.Ring
@@ -33,7 +32,7 @@ type MysqlManager struct {
 }
 
 // NewMysqlManager returns a new MysqlManager
-func NewMysqlManager(app service.Application, config config.MysqlConfig) (*MysqlManager, error) {
+func NewMysqlManager(app Application, config config.MysqlConfig) (*MysqlManager, error) {
 	var readOnlyLength int
 	var err error
 	var engine *xorm.Engine
@@ -86,8 +85,8 @@ func (mm *MysqlManager) newORM(mysql config.MysqlInstance) (*xorm.Engine, error)
 	if err != nil {
 		return nil, err
 	}
-	orm.SetMaxIdleConns(MaxIdle)
-	orm.SetMaxOpenConns(MaxOpen)
+	orm.SetMaxIdleConns(MySQLMaxIdle)
+	orm.SetMaxOpenConns(MySQLMaxOpen)
 
 	if mm.App != nil {
 		output = mm.App.DefaultLogger().Output()
@@ -138,4 +137,15 @@ func (mm *MysqlManager) R() *xorm.Engine {
 // W gets master mysql Engine
 func (mm *MysqlManager) W() *xorm.Engine {
 	return mm.master
+}
+
+func initMySQL(app Application) error {
+	if app.GetConfig().Mysql.InitMySQL {
+		mm, err := NewMysqlManager(app, app.GetConfig().Mysql)
+		if err != nil {
+			return err
+		}
+		app.Set("mysql", mm, nil)
+	}
+	return nil
 }

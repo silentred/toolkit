@@ -35,6 +35,7 @@ func NewWebApp() *WebApp {
 		App:    NewApp(),
 		Router: echo.New(),
 	}
+	app.Set("app.web", app, new(WebApplication))
 	return app
 }
 
