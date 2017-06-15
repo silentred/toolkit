@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"log"
 	"os"
+
+	"github.com/fatih/color"
 )
 
 var (
@@ -125,7 +127,7 @@ func initService(app service.Application) error {
 func initRoute(app service.Application) error {
 	if web, ok := app.(service.WebApplication); ok {
 		web.GetRouter().GET("/", func(ctx echo.Context) error {
-			var ret = ctx.Param("say")
+			var ret = ctx.QueryParam("say")
 			if ret == "" {
 				ret = "Hello world"
 			}
@@ -179,18 +181,24 @@ type file struct {
 
 // RunNew runs new command
 func RunNew(path, appName string) {
-	makeFiles(path, appName)
-}
-
-func makeFiles(path, appName string) {
-	var data = map[string]string{
-		"SrcPath": path,
-		"AppName": appName,
-	}
-
 	gopath, has := os.LookupEnv("GOPATH")
 	if !has {
 		log.Fatal("Please set GOPATH first")
+	}
+
+	makeFiles(gopath, path, appName)
+
+	color.Yellow("# Step2: run following commands to start the app")
+	color.Blue("cd $GOPATH/%s/%s", path, appName)
+	color.Blue("git init && git add * && git commit -m \"init commit\" ")
+	color.Blue("make build && ./%s", appName)
+	color.Green("Have fun!")
+}
+
+func makeFiles(gopath, path, appName string) {
+	var data = map[string]string{
+		"SrcPath": path,
+		"AppName": appName,
 	}
 
 	// file path -> template
@@ -206,18 +214,23 @@ func makeFiles(path, appName string) {
 		appDir + "/service",
 	}
 	for _, val := range dirs {
-		err := os.MkdirAll(val, 0766|os.ModeSticky)
+		err := os.MkdirAll(val, 0755|os.ModeSticky)
 		if err != nil {
 			log.Fatalf("create dir %s: %v", val, err)
 		}
 	}
 
+	color.Yellow("# Step1: creating dirs and files")
 	for key, val := range sources {
 		path := fmt.Sprintf("%s/src/%s/%s/%s", gopath, path, appName, key)
 		f, err := os.Create(path)
 		if err != nil {
 			log.Fatalf("create file %s: %v", path, err)
 		}
+		// log create file
+		color.Blue("create file: %s", path)
 		val.Execute(f, data)
 	}
+
+	color.Green("create file successful")
 }

@@ -64,6 +64,7 @@ func versionPrinter(ctx *cli.Context) {
 	cli.ShowAppHelp(ctx)
 }
 
+// NewProjectAction creates new project
 func NewProjectAction(ctx *cli.Context) error {
 	appName := ctx.Args().First()
 	if appName == "" {
