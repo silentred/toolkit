@@ -39,7 +39,7 @@ func main() {
 }
 
 func initService(app service.Application) error {
-	s := discovery.NewService("hello", "127.0.0.1", 28080)
+	s := discovery.NewService("hello", "127.0.0.1", app.GetConfig().Port)
 	p := discovery.NewEtcdPublisher([]string{"http://localhost:2379"}, 10)
 	app.Inject(p)
 	p.Register(s)

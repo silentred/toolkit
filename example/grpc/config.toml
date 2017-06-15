@@ -3,7 +3,7 @@ runMode = "dev"
 name = "grpc-hello"
 port = 28080
 
-logProvider = "file"
+logProvider = "stdout"
 logPath = "/tmp"
 logRotate = true
 logRotateType = "day"
