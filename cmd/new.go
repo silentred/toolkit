@@ -15,7 +15,7 @@ runMode = "dev"
 name = "{{.AppName}}"
 port = 18080
 
-logProvider = "file"
+logProvider = "stdout"
 logPath = "/tmp"
 logRotate = true
 logRotateType = "day"

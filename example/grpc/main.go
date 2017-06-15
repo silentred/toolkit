@@ -4,6 +4,7 @@ import (
 	"github.com/silentred/toolkit/example/grpc/proto"
 	"github.com/silentred/toolkit/interceptor"
 	"github.com/silentred/toolkit/service"
+	"github.com/silentred/toolkit/service/discovery"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -18,6 +19,7 @@ func (s *helloSvc) SayHello(ctx context.Context, in *proto.HelloReq) (*proto.Hel
 
 func main() {
 	app := service.NewGrpcApp(nil)
+	app.RegisterHook(service.ServiceHook, initService)
 	app.Initialize()
 
 	// create grpc server
@@ -34,4 +36,14 @@ func main() {
 	app.SetServer(s)
 
 	app.ListenAndServe()
+}
+
+func initService(app service.Application) error {
+	s := discovery.NewService("hello", "127.0.0.1", 28080)
+	p := discovery.NewEtcdPublisher([]string{"http://localhost:2379"}, 10)
+	app.Inject(p)
+	p.Register(s)
+	go p.Heartbeat(s)
+
+	return nil
 }
