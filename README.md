@@ -21,7 +21,7 @@ make build
   | | (_) | (_) | |   <| | |_
   |_|\___/ \___/|_|_|\_\_|\__|
 
-Version: v0.0.1
+Version: v0.1.1
 GitHash: 7975f569095d28c979c70f192533fa35a507b0c7
 BuildTS: 2017-06-15 03:44:02
 
@@ -58,6 +58,7 @@ create file successful
 # Step2: run following commands to start the app
 cd $GOPATH/gitlab.luojilab.com/igetserver/myapp
 git init && git add * && git commit -m "init commit"
+go get github.com/labstack/echo
 make build && ./myapp
 Have fun!
 ```

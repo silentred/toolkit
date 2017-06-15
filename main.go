@@ -10,7 +10,7 @@ import (
 
 var (
 	// Version of toolkit
-	Version = "v0.0.1"
+	Version = "v0.1.1"
 	// BuildTS is timestamp of build
 	BuildTS = "None"
 	// GitHash is commit version of build
