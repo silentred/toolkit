@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -16,6 +17,11 @@ type HTTPClientIface interface {
 	Get(*http.Request) ([]byte, int, error)
 	Post(*http.Request) ([]byte, int, error)
 	Do(*http.Request) ([]byte, int, error)
+}
+
+type Response struct {
+	Response *http.Response
+	Err      error
 }
 
 type HTTPClient struct {
@@ -83,6 +89,22 @@ func (hc *HTTPClient) Do(req *http.Request) ([]byte, int, error) {
 	}
 
 	return b, res.StatusCode, nil
+}
+
+// DoParallel http requests, and get response list. Response could be nil
+func (hc *HTTPClient) DoParallel(reqs ...*http.Request) []*Response {
+	var reqNum = len(reqs)
+	var resps = make([]*Response, reqNum)
+	var wg sync.WaitGroup
+	for i := 0; i < reqNum; i++ {
+		wg.Add(1)
+		defer wg.Done()
+		var resp Response
+		resp.Response, resp.Err = hc.client.Do(reqs[i])
+		resps[i] = &resp
+	}
+	wg.Wait()
+	return resps
 }
 
 // Get returns http response body in []byte, timeout in second
