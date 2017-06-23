@@ -17,6 +17,7 @@ type HTTPClientIface interface {
 	Get(*http.Request) ([]byte, int, error)
 	Post(*http.Request) ([]byte, int, error)
 	Do(*http.Request) ([]byte, int, error)
+	DoParallel(...*http.Request) []*Response
 }
 
 type Response struct {
@@ -97,11 +98,13 @@ func (hc *HTTPClient) DoParallel(reqs ...*http.Request) []*Response {
 	var resps = make([]*Response, reqNum)
 	var wg sync.WaitGroup
 	for i := 0; i < reqNum; i++ {
-		wg.Add(1)
-		defer wg.Done()
-		var resp Response
-		resp.Response, resp.Err = hc.client.Do(reqs[i])
-		resps[i] = &resp
+		go func(idx int) {
+			wg.Add(1)
+			var resp Response
+			resp.Response, resp.Err = hc.client.Do(reqs[idx])
+			resps[idx] = &resp
+			wg.Done()
+		}(i)
 	}
 	wg.Wait()
 	return resps
