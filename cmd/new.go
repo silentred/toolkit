@@ -189,7 +189,7 @@ func RunNew(path, appName string) {
 	makeFiles(gopath, path, appName)
 
 	color.Yellow("# Step2: run following commands to start the app")
-	color.Blue("cd $GOPATH/%s/%s", path, appName)
+	color.Blue("cd $GOPATH/src/%s/%s", path, appName)
 	color.Blue("git init && git add * && git commit -m \"init commit\" ")
 	color.Blue("go get github.com/labstack/echo")
 	color.Blue("make build && ./%s", appName)
