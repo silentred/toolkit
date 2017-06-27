@@ -14,8 +14,6 @@ import (
 )
 
 type HTTPClientIface interface {
-	Get(*http.Request) ([]byte, int, error)
-	Post(*http.Request) ([]byte, int, error)
 	Do(*http.Request) ([]byte, int, error)
 	DoParallel(...*http.Request) []*Response
 }
@@ -73,23 +71,27 @@ func NewHTTPReqeust(method, url string, queries, headers map[string]string, body
 }
 
 func (hc *HTTPClient) Do(req *http.Request) ([]byte, int, error) {
-	res, err := hc.client.Do(req)
+	var err error
+	var b []byte
+
+	resp, err := hc.client.Do(req)
 	if err != nil {
+		if resp != nil {
+			b, err = ioutil.ReadAll(resp.Body)
+			resp.Body.Close()
+			return b, resp.StatusCode, err
+		}
 		return nil, 0, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, res.StatusCode, fmt.Errorf("resp code is %d", res.StatusCode)
-	}
-
-	b, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
+	b, err = ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
 
 	if err != nil {
-		return nil, res.StatusCode, err
+		return b, resp.StatusCode, err
 	}
 
-	return b, res.StatusCode, nil
+	return b, resp.StatusCode, nil
 }
 
 // DoParallel http requests, and get response list. Response could be nil
@@ -111,16 +113,16 @@ func (hc *HTTPClient) DoParallel(reqs ...*http.Request) []*Response {
 }
 
 // Get returns http response body in []byte, timeout in second
-func (hc *HTTPClient) Get(req *http.Request) ([]byte, int, error) {
-	req.Method = "GET"
-	return hc.Do(req)
-}
+// func (hc *HTTPClient) Get(req *http.Request) ([]byte, int, error) {
+// 	req.Method = "GET"
+// 	return hc.Do(req)
+// }
 
 // Post do http post
-func (hc *HTTPClient) Post(req *http.Request) ([]byte, int, error) {
-	req.Method = "POST"
-	return hc.Do(req)
-}
+// func (hc *HTTPClient) Post(req *http.Request) ([]byte, int, error) {
+// 	req.Method = "POST"
+// 	return hc.Do(req)
+// }
 
 // GetReadCloser for downloading file
 func (hc *HTTPClient) GetReadCloser(req *http.Request) (io.ReadCloser, string, int, error) {
