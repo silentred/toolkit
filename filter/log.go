@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/gommon/log"
 	"github.com/silentred/echorus"
+	"github.com/silentred/toolkit/util"
 )
 
 type (
@@ -15,12 +16,12 @@ type (
 	LoggerConfig struct {
 		// Skipper defines a function to skip middleware.
 		Skipper Skipper
-		Logger  *echorus.Echorus
+		Logger  util.Logger
 		Format  logrus.Formatter
 	}
 )
 
-func NewConfig(logger *echorus.Echorus) LoggerConfig {
+func NewConfig(logger util.Logger) LoggerConfig {
 	return LoggerConfig{
 		Skipper: DefaultSkipper,
 		Logger:  logger,
@@ -29,7 +30,7 @@ func NewConfig(logger *echorus.Echorus) LoggerConfig {
 }
 
 // Logger returns a middleware that logs HTTP requests.
-func Logger(logger *echorus.Echorus) echo.MiddlewareFunc {
+func Logger(logger util.Logger) echo.MiddlewareFunc {
 	return LoggerWithConfig(NewConfig(logger))
 }
 
@@ -40,7 +41,9 @@ func LoggerWithConfig(config LoggerConfig) echo.MiddlewareFunc {
 		config.Skipper = DefaultSkipper
 	}
 	if config.Format != nil {
-		config.Logger.SetFormat(config.Format)
+		if l, ok := config.Logger.(*echorus.Echorus); ok {
+			l.SetFormat(config.Format)
+		}
 	}
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
