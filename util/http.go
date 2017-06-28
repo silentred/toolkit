@@ -100,8 +100,8 @@ func (hc *HTTPClient) DoParallel(reqs ...*http.Request) []*Response {
 	var resps = make([]*Response, reqNum)
 	var wg sync.WaitGroup
 	for i := 0; i < reqNum; i++ {
+		wg.Add(1)
 		go func(idx int) {
-			wg.Add(1)
 			var resp Response
 			resp.Response, resp.Err = hc.client.Do(reqs[idx])
 			resps[idx] = &resp
