@@ -45,7 +45,7 @@ var (
 
 func init() {
 	flag.StringVar(&AppMode, "mode", "", "RunMode of the application: dev or prod")
-	flag.StringVar(&ConfigFile, "cfg", "config.toml", "absolute path of config file")
+	flag.StringVar(&ConfigFile, "cfg", "", "absolute path of config file")
 	flag.StringVar(&LogPath, "logPath", ".", "logPath is where log file will be")
 }
 
