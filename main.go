@@ -48,8 +48,8 @@ func main() {
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:        "src",
-					Usage:       "Source path in the GOPATH. For example: github.com/igetserver",
-					Value:       "gitlab.luojilab.com/igetserver",
+					Usage:       "Source path in the GOPATH. For example: github.com/silentred",
+					Value:       "gitlab.alipay-inc.com/oceanbase-dba",
 					Destination: &sourcePath,
 				},
 			},
