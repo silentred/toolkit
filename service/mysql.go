@@ -79,21 +79,27 @@ func NewMysqlManager(app Application, config config.MysqlConfig) (*MysqlManager,
 }
 
 func (mm *MysqlManager) newORM(mysql config.MysqlInstance) (*xorm.Engine, error) {
+	writer := mm.App.DefaultLogger().Output()
+	debug := mm.App.GetConfig().Mode == config.ModeDev
+	return NewXormEngine(mysql, writer, MySQLMaxIdle, MySQLMaxOpen, debug, mm.Config.Ping)
+}
+
+func NewXormEngine(mysql config.MysqlInstance, logWriter io.Writer, idle, open int, debug, ping bool) (*xorm.Engine, error) {
 	var output io.Writer = os.Stdout
 
 	orm, err := xorm.NewEngine("mysql", mysql.String())
 	if err != nil {
 		return nil, err
 	}
-	orm.SetMaxIdleConns(MySQLMaxIdle)
-	orm.SetMaxOpenConns(MySQLMaxOpen)
+	orm.SetMaxIdleConns(idle)
+	orm.SetMaxOpenConns(open)
 
-	if mm.App != nil {
-		output = mm.App.DefaultLogger().Output()
+	if logWriter != nil {
+		output = logWriter
 		// set Logger output
 		logger := xorm.NewSimpleLogger(output)
 
-		if mm.App.GetConfig().Mode == config.ModeDev {
+		if debug {
 			orm.ShowSQL(true)
 			orm.ShowExecTime(true)
 			logger.ShowSQL(true)
@@ -104,10 +110,10 @@ func (mm *MysqlManager) newORM(mysql config.MysqlInstance) (*xorm.Engine, error)
 		orm.SetLogger(logger)
 	}
 
-	if mm.Config.Ping {
+	if ping {
 		err = orm.Ping()
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 	}
 
