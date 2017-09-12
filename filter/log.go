@@ -4,11 +4,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/labstack/echo"
 	"github.com/labstack/gommon/log"
 	"github.com/silentred/echorus"
 	"github.com/silentred/toolkit/util"
+	"github.com/sirupsen/logrus"
 )
 
 type (
