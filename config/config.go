@@ -53,10 +53,11 @@ type MysqlConfig struct {
 type MysqlInstance struct {
 	Name     string `json:"name"`
 	Host     string `json:"host"`
-	Port     int    `json:"port"`
 	User     string `json:"user"`
 	Pwd      string `json:"password"`
 	Db       string `json:"db"`
+	Version  string `json:"version"`
+	Port     int    `json:"port"`
 	ReadOnly bool   `json:"read_only"`
 }
 
