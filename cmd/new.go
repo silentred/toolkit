@@ -99,11 +99,22 @@ import (
 var (
 	GitHash = "None"
 	BuildTS = "None"
+
+	ver bool
 )
+
+func init() {
+	flag.BoolVar(&ver, "v", false, "show version")
+}
 
 func main() {
 	flag.Parse()
 
+	if ver {
+		fmt.Printf("GitHash: %s \nBuildTS: %s \n", GitHash, BuildTS)
+		return
+	}
+	
 	app := service.NewWebApp()
 	app.RegisterHook(service.ConfigHook, initConfig)
 	app.RegisterHook(service.RouterHook, initRoute)
