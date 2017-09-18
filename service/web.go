@@ -64,7 +64,7 @@ func (app *WebApp) ListenAndServe() {
 func graceStart(app *WebApp) error {
 	// Start server
 	go func() {
-		if err := app.Router.Start(fmt.Sprintf(":%d", app.Config.Port)); err != nil {
+		if err := app.Router.Start(fmt.Sprintf("%s:%d", app.Config.Host, app.Config.Port)); err != nil {
 			log.Fatal(err)
 		}
 	}()

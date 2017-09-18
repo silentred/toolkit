@@ -43,7 +43,7 @@ func (app *GrpcApp) Initialize() {
 
 // ListenAndServe implements the GrpcApplication interface
 func (app *GrpcApp) ListenAndServe() {
-	var port = fmt.Sprintf(":%d", app.GetConfig().Port)
+	var port = fmt.Sprintf("%s:%d", app.GetConfig().Host, app.GetConfig().Port)
 	l, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

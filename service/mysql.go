@@ -2,11 +2,9 @@ package service
 
 import (
 	"container/ring"
+	"fmt"
 	"io"
 	"log"
-
-	"fmt"
-
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -58,12 +56,12 @@ func NewMysqlManager(app Application, config config.MysqlConfig) (*MysqlManager,
 				mm.readOnlyRing = mm.readOnlyRing.Next()
 				mm.databases[instance.Name] = engine
 			} else {
-				fmt.Printf("WARNING when initializing MySQL: %s \n", err)
+				log.Fatalf("WARNING when initializing MySQL: %s \n", err)
 			}
 		} else {
 			engine, err = mm.newORM(instance)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("mysql instance: %+v, err: %v", instance, err)
 			}
 			mm.master = engine
 			mm.databases[instance.Name] = mm.master

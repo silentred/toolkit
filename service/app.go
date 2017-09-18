@@ -220,6 +220,7 @@ func (app *App) LoadConfig(mode string) *cfg.AppConfig {
 func appConfig(c *cfg.AppConfig) {
 	c.Name = viper.GetString("app.name")
 	c.Mode = viper.GetString("app.runMode")
+	c.Host = viper.GetString("app.host")
 	c.Port = viper.GetInt("app.port")
 }
 

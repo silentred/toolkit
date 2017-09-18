@@ -19,6 +19,7 @@ const (
 type AppConfig struct {
 	Name  string
 	Mode  string
+	Host  string
 	Port  int
 	Log   LogConfig
 	Mysql MysqlConfig
