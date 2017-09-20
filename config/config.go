@@ -57,13 +57,14 @@ type MysqlInstance struct {
 	User     string `json:"user"`
 	Pwd      string `json:"password"`
 	Db       string `json:"db"`
+	Option   string `json:"option"`
 	Version  string `json:"version"`
 	Port     int    `json:"port"`
 	ReadOnly bool   `json:"read_only"`
 }
 
 func (inst MysqlInstance) String() string {
-	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8", inst.User, inst.Pwd, inst.Host, inst.Port, inst.Db)
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8&%s", inst.User, inst.Pwd, inst.Host, inst.Port, inst.Db, inst.Option)
 }
 
 // RedisConfig for redis
