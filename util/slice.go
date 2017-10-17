@@ -31,3 +31,12 @@ func SliceIntToString(s []int) []string {
 	}
 	return r
 }
+
+func InSliceString(needle string, stack []string) bool {
+	for _, item := range stack {
+		if needle == item {
+			return true
+		}
+	}
+	return false
+}
