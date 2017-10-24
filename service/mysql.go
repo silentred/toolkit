@@ -126,6 +126,15 @@ func (mm *MysqlManager) DB(name string) *xorm.Engine {
 	return nil
 }
 
+// SetDB sets database by name
+func (mm *MysqlManager) SetDB(name string, engine *xorm.Engine) bool {
+	if _, ok := mm.databases[name]; ok {
+		return false
+	}
+	mm.databases[name] = engine
+	return true
+}
+
 // R get read-only mysql Engine
 func (mm *MysqlManager) R() *xorm.Engine {
 	if mm.readOnlyRing.Len() == 0 {
