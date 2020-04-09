@@ -14,7 +14,7 @@ import (
 	"github.com/silentred/toolkit/util/strings"
 )
 
-type Logger echo.Logger
+type Logger = echo.Logger
 
 // NewLogger return a new
 func NewLogger(appName string, level elog.Lvl, config cfg.LogConfig) Logger {
