@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	elog "github.com/labstack/gommon/log"
 	"github.com/silentred/echorus"
 	cfg "github.com/silentred/toolkit/config"
